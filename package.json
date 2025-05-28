@@ -1,0 +1,33 @@
+{
+  "name": "local-weave",
+  "version": "0.1.0",
+  "description": "CLI tool to find PDFs and prepare them for Weaviate vector database",
+  "bin": {
+    "local-weave": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "ingest": "ts-node src/ingest.ts"
+  },
+  "keywords": [
+    "pdf",
+    "weaviate",
+    "vector-database",
+    "cli"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "commander": "^11.0.0",
+    "pdf-parse": "^1.1.1",
+    "pdfjs-dist": "^3.11.174",
+    "chalk": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.5.0",
+    "@types/pdf-parse": "^1.1.1",
+    "ts-node": "^10.9.1",
+    "typescript": "^5.1.6"
+  }
+}

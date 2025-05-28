@@ -1,0 +1,22 @@
+# Dependencies
+node_modules/
+
+# Compiled output
+dist/
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Environment variables
+.env
+
+# IDE files
+.idea/
+.vscode/
+*.sublime-workspace
+
+# OS files
+.DS_Store
+Thumbs.db
