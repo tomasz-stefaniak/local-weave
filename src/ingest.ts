@@ -10,7 +10,7 @@ import {
   PDFDocument,
 } from "./utils/weaviateClient";
 import { weaviateConfig, pdfConfig } from "./config";
-import type { WeaviateClient } from "weaviate-client";
+import { v4 as uuidv4 } from "uuid";
 
 // Convert callback-based functions to Promise-based
 const readdir = promisify(fs.readdir);
@@ -72,15 +72,10 @@ async function parsePdf(filePath: string): Promise<PDFDocument> {
 
 // Store documents in Weaviate
 async function storeDocumentsInWeaviate(
-  client: WeaviateClient,
+  client: any,
   documents: PDFDocument[]
 ): Promise<void> {
   try {
-    // Get the collection
-    const collection = client.collections.use<PDFDocument>(
-      weaviateConfig.collectionName
-    );
-
     console.log(`Storing ${documents.length} documents in Weaviate...`);
 
     // Process documents in batches to avoid overwhelming the server
@@ -93,8 +88,24 @@ async function storeDocumentsInWeaviate(
         )}`
       );
 
-      // Insert documents in the current batch
-      await collection.data.insertMany(batch);
+      // Add each document to the batch
+      const batcher = client.batch.objectsBatcher();
+      for (const doc of batch) {
+        const obj = {
+          class: weaviateConfig.collectionName,
+          id: uuidv4(),
+          properties: {
+            path: doc.path,
+            filename: doc.filename,
+            content: doc.content,
+            createdAt: doc.createdAt,
+          },
+        };
+        batcher.withObject(obj);
+      }
+
+      // Execute the batch
+      await batcher.do();
     }
 
     console.log("All documents stored successfully!");
@@ -180,9 +191,6 @@ async function main() {
     });
 
     console.log("\nDone! All PDFs have been processed and stored in Weaviate.");
-
-    // Close the client connection
-    await client.close();
   } catch (error) {
     console.error("Error:", error);
     process.exit(1);

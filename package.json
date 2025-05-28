@@ -8,7 +8,9 @@
   "scripts": {
     "build": "tsc",
     "test": "jest",
-    "ingest": "ts-node src/ingest.ts"
+    "ingest": "ts-node src/ingest.ts",
+    "search": "ts-node src/search.ts",
+    "check-weaviate": "ts-node src/check-weaviate.ts"
   },
   "keywords": [
     "pdf",
@@ -19,10 +21,13 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
+    "chalk": "^4.1.2",
     "commander": "^11.0.0",
+    "dotenv": "^16.0.3",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^3.11.174",
-    "chalk": "^4.1.2"
+    "uuid": "^11.1.0",
+    "weaviate-ts-client": "^1.5.0"
   },
   "devDependencies": {
     "@types/node": "^20.5.0",
