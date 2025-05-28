@@ -1,23 +1,26 @@
 ---
-version: '3.4'
+version: "3.4"
 services:
   weaviate_anon:
     command:
-    - --host
-    - 0.0.0.0
-    - --port
-    - '8080'
-    - --scheme
-    - http
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8080"
+      - --scheme
+      - http
     image: cr.weaviate.io/semitechnologies/weaviate:1.30.6
     ports:
-    - 8080:8080
-    - 50051:50051
+      - 8080:8080
+      - 50051:50051
     restart: on-failure:0
     environment:
       QUERY_DEFAULTS_LIMIT: 25
-      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
-      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
-      ENABLE_API_BASED_MODULES: 'true'
-      BACKUP_FILESYSTEM_PATH: '/var/lib/weaviate/backups'
-      CLUSTER_HOSTNAME: 'node1'
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: "/var/lib/weaviate"
+      ENABLE_API_BASED_MODULES: "true"
+      BACKUP_FILESYSTEM_PATH: "/var/lib/weaviate/backups"
+      CLUSTER_HOSTNAME: "node1"
+      ENABLE_MODULES: "text2vec-openai"
+      DEFAULT_VECTORIZER_MODULE: "text2vec-openai"
+      OPENAI_APIKEY: ${OPENAI_API_KEY}
