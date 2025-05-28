@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Local Weave Search</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: rgba(255, 255, 255, 0.95);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+        }
+
+        .search-container {
+            width: 100%;
+        }
+
+        #search-input {
+            width: 100%;
+            padding: 12px;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            background: transparent;
+            color: #000;
+            border-bottom: 2px solid #eee;
+            margin-bottom: 10px;
+        }
+
+        #search-input::placeholder {
+            color: #666;
+        }
+
+        #results {
+            margin-top: 10px;
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .result-item {
+            padding: 15px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 10px;
+            border: 1px solid #eee;
+        }
+
+        .result-item:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-color: #ddd;
+        }
+
+        .result-icon {
+            width: 24px;
+            height: 24px;
+            margin-right: 12px;
+            background-color: #007AFF;
+            border-radius: 4px;
+            flex-shrink: 0;
+        }
+
+        .result-content {
+            flex: 1;
+        }
+
+        .result-title {
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: #000;
+            font-size: 15px;
+        }
+
+        .result-description {
+            font-size: 13px;
+            color: #444;
+            margin-bottom: 8px;
+            line-height: 1.4;
+        }
+
+        .result-meta {
+            font-size: 12px;
+            color: #666;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .result-certainty {
+            font-size: 12px;
+            color: #007AFF;
+            background: rgba(0, 122, 255, 0.1);
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .loading::after {
+            content: '';
+            width: 20px;
+            height: 20px;
+            border: 2px solid #007AFF;
+            border-top-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .error {
+            text-align: center;
+            padding: 20px;
+            color: #ff3b30;
+            font-size: 14px;
+            background: rgba(255, 59, 48, 0.1);
+            border-radius: 8px;
+            margin: 10px 0;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="search-container">
+        <input type="text" id="search-input" placeholder="Search documents..." autofocus>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        const { ipcRenderer } = require('electron');
+        
+        const searchInput = document.getElementById('search-input');
+        const resultsDiv = document.getElementById('results');
+        let searchTimeout = null;
+        let isSearching = false;
+
+        async function performSearch(query) {
+            if (!query.trim()) {
+                resultsDiv.innerHTML = '';
+                return;
+            }
+
+            if (isSearching) {
+                return;
+            }
+
+            isSearching = true;
+            resultsDiv.innerHTML = '<div class="loading">Searching documents</div>';
+
+            try {
+                console.log('Sending search request for:', query);
+                const results = await ipcRenderer.invoke('perform-search', query);
+                console.log('Received search results:', results);
+                displayResults(results);
+            } catch (error) {
+                console.error('Search error:', error);
+                resultsDiv.innerHTML = `<div class="error">Error performing search: ${error.message}</div>`;
+            } finally {
+                isSearching = false;
+            }
+        }
+
+        function displayResults(results) {
+            console.log('Displaying results:', results);
+            resultsDiv.innerHTML = '';
+            
+            if (!results || results.length === 0) {
+                resultsDiv.innerHTML = '<div class="no-results">No matching documents found</div>';
+                return;
+            }
+
+            results.forEach((result, index) => {
+                console.log(`Creating result item ${index}:`, result);
+                const div = document.createElement('div');
+                div.className = 'result-item';
+                div.innerHTML = `
+                    <div class="result-icon"></div>
+                    <div class="result-content">
+                        <div class="result-title">${result.title || 'Untitled Document'}</div>
+                        <div class="result-description">${result.description || 'No description available'}</div>
+                        <div class="result-meta">
+                            <span>${result.path || 'Unknown path'}</span>
+                            ${result.certainty ? `<span class="result-certainty">${result.certainty}% match</span>` : ''}
+                        </div>
+                    </div>
+                `;
+                resultsDiv.appendChild(div);
+            });
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value;
+            
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+            
+            searchTimeout = setTimeout(() => {
+                performSearch(query);
+            }, 300);
+        });
+
+        // Close window when Escape is pressed
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                ipcRenderer.send('hide-window');
+            }
+        });
+    </script>
+</body>
+</html> 
