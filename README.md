@@ -14,5 +14,5 @@ npm install
 
 # Configure environment variables
 cp .env.example .env
-# Edit .env with your Weaviate and OpenAI credentials
+# Edit .env with your OpenAI API key
 ```
