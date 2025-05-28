@@ -21,7 +21,7 @@ async function searchDocuments(query: string): Promise<any[]> {
       .withClassName(weaviateConfig.collectionName)
       .withFields("path filename content createdAt _additional { certainty }")
       .withNearText({ concepts: [query] })
-      .withLimit(5)
+      .withLimit(3)
       .do();
     // Return matching documents
     return result.data.Get[weaviateConfig.collectionName] || [];
