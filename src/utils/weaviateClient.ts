@@ -84,6 +84,7 @@ export async function ensureCollection(client: any): Promise<void> {
       console.log(`Class ${weaviateConfig.collectionName} already exists.`);
     }
   } catch (error) {
+    // @ts-ignore
     if (error.message && error.message.includes("not found")) {
       // Class doesn't exist, create it
       console.log(`Creating class ${weaviateConfig.collectionName}...`);
