@@ -68,67 +68,58 @@ function parseSearchResults(output) {
   console.log('Number of lines to process:', lines.length);
   let currentResult = null;
 
-  // Skip the header line
-  let i = 0;
-  while (i < lines.length && !lines[i].includes('==== Search Results for')) {
-    i++;
-  }
-  console.log('Found header at line:', i);
-  i++; // Skip the header line
-
-  while (i < lines.length) {
+  for (let i = 0; i < lines.length; i++) {
     const line = lines[i].trim();
     
     // Skip empty lines
     if (!line) {
-      i++;
       continue;
     }
 
-    // Check if this is a new result (starts with [number])
-    if (line.match(/^\[\d+\]/)) {
+    // Check if this is a new result (starts with a number and 📄)
+    if (line.match(/^\d+\s+📄/)) {
       if (currentResult) {
-        console.log('Adding result:', currentResult);
         results.push(currentResult);
       }
       
-      // Extract filename and certainty
-      const match = line.match(/^\[\d+\] (.*?)(?: \(Certainty: ([\d.]+)%\))?$/);
-      if (match) {
-        console.log('Found new result:', match[1]);
-        currentResult = {
-          title: match[1],
-          certainty: match[2] || '',
-          path: '',
-          createdAt: '',
-          description: ''
-        };
-      }
+      // Extract filename
+      const filename = line.split('📄')[1].trim();
+      currentResult = {
+        title: filename,
+        path: '',
+        createdAt: '',
+        description: '',
+        certainty: ''
+      };
     } else if (currentResult) {
       // Parse other result details
-      if (line.startsWith('Path:')) {
-        currentResult.path = line.replace('Path:', '').trim();
-        console.log('Added path:', currentResult.path);
-      } else if (line.startsWith('Created:')) {
-        currentResult.createdAt = line.replace('Created:', '').trim();
-        console.log('Added creation date:', currentResult.createdAt);
-      } else if (line.startsWith('Relevant content:')) {
-        currentResult.description = line.replace('Relevant content:', '').trim();
-        console.log('Added content snippet:', currentResult.description.substring(0, 50) + '...');
+      if (line.startsWith('📁 Path:')) {
+        currentResult.path = line.replace('📁 Path:', '').trim();
+      } else if (line.startsWith('🗓️  Created:')) {
+        currentResult.createdAt = line.replace('🗓️  Created:', '').trim();
+      } else if (line.startsWith('🎯 Relevance:')) {
+        const certaintyMatch = line.match(/(\d+\.\d+)%/);
+        if (certaintyMatch) {
+          currentResult.certainty = certaintyMatch[1];
+        }
+      } else if (line.startsWith('📝 Content:')) {
+        // Get the next line as the content snippet
+        if (i + 1 < lines.length) {
+          currentResult.description = lines[i + 1].trim();
+          i++; // Skip the next line since we've used it
+        }
       }
     }
-    
-    i++;
   }
 
   // Add the last result if exists
   if (currentResult) {
-    console.log('Adding final result:', currentResult);
     results.push(currentResult);
   }
 
   console.log('\n=== Parsing Complete ===');
   console.log('Total results found:', results.length);
+  console.log('Parsed results:', JSON.stringify(results, null, 2));
   return results;
 }
 
